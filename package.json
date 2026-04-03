@@ -1,0 +1,59 @@
+{
+  "name": "nuclear-plugin-monochrome",
+  "version": "0.1.0",
+  "description": "Monochrome metadata and streaming provider for Nuclear music player",
+  "author": "nukeop",
+  "license": "AGPL-3.0-only",
+  "main": "src/index.ts",
+  "type": "module",
+  "nuclear": {
+    "displayName": "Monochrome",
+    "category": "streaming",
+    "icon": {
+      "type": "link",
+      "link": "https://monochrome.tf/assets/512.png"
+    },
+    "permissions": []
+  },
+  "keywords": [
+    "nuclear",
+    "plugin",
+    "monochrome",
+    "tidal",
+    "hifi",
+    "metadata",
+    "streaming"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NuclearPlayer/nuclear-plugin-monochrome.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NuclearPlayer/nuclear-plugin-monochrome/issues"
+  },
+  "scripts": {
+    "lint": "eslint 'src/**/*.ts' eslint.config.ts",
+    "lint:fix": "eslint 'src/**/*.ts' eslint.config.ts --fix",
+    "format": "prettier --write 'src/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts'"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "dependencies": {
+    "@nuclearplayer/plugin-sdk": "^2.7.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.4.0",
+    "jiti": "^2.6.1",
+    "prettier": "^3.8.1",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.0"
+  }
+}
