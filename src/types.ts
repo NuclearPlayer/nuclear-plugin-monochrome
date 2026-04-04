@@ -49,6 +49,7 @@ export type TidalAlbum = {
   explicit: boolean;
   audioQuality: string;
   audioModes: string[];
+  mediaMetadata?: { tags: string[] };
   type?: string;
   version: string | null;
   artist: TidalArtistSummary;

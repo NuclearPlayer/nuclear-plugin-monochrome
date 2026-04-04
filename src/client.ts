@@ -1,6 +1,7 @@
 import type { FetchFunction } from '@nuclearplayer/plugin-sdk';
 
 import {
+  ARTIST_CACHE_TTL_MS,
   BACKOFF_BASE_MS,
   BACKOFF_MAX_MS,
   REQUEST_TIMEOUT_MS,
@@ -10,13 +11,11 @@ import { instanceRing } from './instances';
 import type {
   HiFiAlbumResponse,
   HiFiArtistDiscographyResponse,
-  HiFiArtistInfoResponse,
   HiFiCoverResponse,
   HiFiSearchAlbumsResponse,
   HiFiSearchArtistsResponse,
   HiFiSearchTracksResponse,
   HiFiSimilarArtistsResponse,
-  HiFiTrackInfoResponse,
   HiFiTrackPlaybackResponse,
 } from './types';
 
@@ -25,8 +24,14 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const backoffDelay = (attempt: number) =>
   Math.min(BACKOFF_BASE_MS * 2 ** attempt, BACKOFF_MAX_MS);
 
+type CacheEntry<T> = {
+  data: T;
+  fetchedAt: number;
+};
+
 export class HiFiClient {
   #fetch: FetchFunction;
+  #artistCache = new Map<number, CacheEntry<HiFiArtistDiscographyResponse>>();
 
   constructor(fetchFn: FetchFunction) {
     this.#fetch = fetchFn;
@@ -113,12 +118,15 @@ export class HiFiClient {
     });
   }
 
-  async getTrackInfo(trackId: number): Promise<HiFiTrackInfoResponse> {}
-
   async getTrackPlayback(
     trackId: number,
-    quality?: string,
-  ): Promise<HiFiTrackPlaybackResponse> {}
+    quality = 'LOSSLESS',
+  ): Promise<HiFiTrackPlaybackResponse> {
+    return this.#request('/track', {
+      id: String(trackId),
+      quality,
+    });
+  }
 
   async getAlbum(albumId: number, limit = 100): Promise<HiFiAlbumResponse> {
     return this.#request('/album', {
@@ -127,27 +135,20 @@ export class HiFiClient {
     });
   }
 
-  async getArtist(artistId: number): Promise<HiFiArtistInfoResponse> {
-    return this.#request('/artist', { id: String(artistId) });
-  }
-
-  async getArtistDiscography(
+  async getArtistOverview(
     artistId: number,
   ): Promise<HiFiArtistDiscographyResponse> {
-    return this.#request('/artist', {
+    const cached = this.#artistCache.get(artistId);
+    if (cached && Date.now() - cached.fetchedAt < ARTIST_CACHE_TTL_MS) {
+      return cached.data;
+    }
+
+    const data = await this.#request<HiFiArtistDiscographyResponse>('/artist', {
       f: String(artistId),
       skip_tracks: 'true',
     });
-  }
-
-  async getArtistTopTracks(
-    artistId: number,
-    limit = 15,
-  ): Promise<HiFiArtistDiscographyResponse> {
-    return this.#request('/artist', {
-      f: String(artistId),
-      limit: String(limit),
-    });
+    this.#artistCache.set(artistId, { data, fetchedAt: Date.now() });
+    return data;
   }
 
   async getSimilarArtists(

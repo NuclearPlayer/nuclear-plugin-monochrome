@@ -1,10 +1,10 @@
 import type {
   Album,
   AlbumRef,
-  ArtistBio,
   ArtistRef,
   ArtworkSet,
   ProviderRef,
+  StreamCandidate,
   Track,
   TrackRef,
 } from '@nuclearplayer/plugin-sdk';
@@ -12,10 +12,11 @@ import type {
 import { METADATA_PROVIDER_ID } from './config';
 import type {
   HiFiAlbumResponse,
-  HiFiArtistInfoResponse,
   TidalAlbum,
   TidalArtist,
   TidalArtistSummary,
+  TidalBtsManifest,
+  TidalPlaybackInfo,
   TidalSimilarArtist,
   TidalTrack,
 } from './types';
@@ -35,9 +36,9 @@ const makeArtworkSet = (uuid: string | null): ArtworkSet | undefined =>
     ? {
         items: [
           {
-            url: coverUrl(uuid, 1280),
-            width: 1280,
-            height: 1280,
+            url: coverUrl(uuid, 750),
+            width: 750,
+            height: 750,
             purpose: 'cover',
           },
           {
@@ -63,6 +64,37 @@ export const mapTidalArtistToArtistRef = (artist: TidalArtist): ArtistRef => ({
   artwork: makeArtworkSet(artist.picture),
   source: makeSource(artist.id),
 });
+
+export const deduplicateAlbums = (albums: TidalAlbum[]): TidalAlbum[] => {
+  const unique = new Map<string, TidalAlbum>();
+
+  albums.forEach((album) => {
+    const key = JSON.stringify([album.title, album.numberOfTracks]);
+    const existing = unique.get(key);
+
+    if (!existing) {
+      unique.set(key, album);
+      return;
+    }
+
+    if (album.explicit && !existing.explicit) {
+      unique.set(key, album);
+      return;
+    }
+
+    if (!album.explicit && existing.explicit) {
+      return;
+    }
+
+    const existingTags = existing.mediaMetadata?.tags?.length ?? 0;
+    const newTags = album.mediaMetadata?.tags?.length ?? 0;
+    if (newTags > existingTags) {
+      unique.set(key, album);
+    }
+  });
+
+  return Array.from(unique.values());
+};
 
 export const mapTidalAlbumToAlbumRef = (album: TidalAlbum): AlbumRef => ({
   title: album.title,
@@ -95,14 +127,6 @@ export const mapTidalAlbumToAlbum = (
   source: makeSource(album.id),
 });
 
-export const mapArtistInfoToArtistBio = (
-  response: HiFiArtistInfoResponse,
-): ArtistBio => ({
-  name: response.artist.name,
-  artwork: makeArtworkSet(response.artist.picture),
-  source: makeSource(response.artist.id),
-});
-
 export const mapTidalSimilarArtistToArtistRef = (
   artist: TidalSimilarArtist,
 ): ArtistRef => ({
@@ -128,3 +152,30 @@ export const mapTidalTrackToTrack = (track: TidalTrack): Track => ({
   artwork: makeArtworkSet(track.album.cover),
   source: makeSource(track.id),
 });
+
+export const mapTidalTrackToStreamCandidate = (
+  track: TidalTrack,
+): StreamCandidate => ({
+  id: String(track.id),
+  title: `${track.artists.map((artist) => artist.name).join(', ')} - ${track.title}`,
+  durationMs: track.duration * 1000,
+  thumbnail: track.album.cover
+    ? coverUrl(track.album.cover, 320)
+    : undefined,
+  failed: false,
+  source: makeSource(track.id),
+});
+
+const BTS_MIME_TYPE = 'application/vnd.tidal.bts';
+
+export const resolveManifest = (
+  playbackInfo: TidalPlaybackInfo,
+): TidalBtsManifest => {
+  if (playbackInfo.manifestMimeType !== BTS_MIME_TYPE) {
+    throw new Error(
+      `Unsupported manifest type: ${playbackInfo.manifestMimeType}`,
+    );
+  }
+
+  return JSON.parse(atob(playbackInfo.manifest)) as TidalBtsManifest;
+};

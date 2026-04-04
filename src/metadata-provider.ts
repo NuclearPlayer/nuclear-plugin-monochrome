@@ -1,9 +1,13 @@
 import type { MetadataProvider } from '@nuclearplayer/plugin-sdk';
 
 import type { HiFiClient } from './client';
-import { METADATA_PROVIDER_ID, STREAMING_PROVIDER_ID } from './config';
 import {
-  mapArtistInfoToArtistBio,
+  ARTIST_TOP_TRACKS_LIMIT,
+  METADATA_PROVIDER_ID,
+  STREAMING_PROVIDER_ID,
+} from './config';
+import {
+  deduplicateAlbums,
   mapTidalAlbumToAlbum,
   mapTidalAlbumToAlbumRef,
   mapTidalArtistToArtistRef,
@@ -21,7 +25,6 @@ export const createMetadataProvider = (
   streamingProviderId: STREAMING_PROVIDER_ID,
   searchCapabilities: ['artists', 'albums', 'tracks'],
   artistMetadataCapabilities: [
-    'artistBio',
     'artistAlbums',
     'artistTopTracks',
     'artistRelatedArtists',
@@ -43,19 +46,18 @@ export const createMetadataProvider = (
     return response.data.items.map(mapTidalTrackToTrack);
   },
 
-  fetchArtistBio: async (artistId) => {
-    const response = await client.getArtist(Number(artistId));
-    return mapArtistInfoToArtistBio(response);
-  },
-
   fetchArtistAlbums: async (artistId) => {
-    const response = await client.getArtistDiscography(Number(artistId));
-    return response.albums.items.map(mapTidalAlbumToAlbumRef);
+    const response = await client.getArtistOverview(Number(artistId));
+    return deduplicateAlbums(response.albums.items).map(
+      mapTidalAlbumToAlbumRef,
+    );
   },
 
   fetchArtistTopTracks: async (artistId) => {
-    const response = await client.getArtistTopTracks(Number(artistId));
-    return response.tracks.map(mapTidalTrackToTrackRef);
+    const response = await client.getArtistOverview(Number(artistId));
+    return response.tracks
+      .slice(0, ARTIST_TOP_TRACKS_LIMIT)
+      .map(mapTidalTrackToTrackRef);
   },
 
   fetchArtistRelatedArtists: async (artistId) => {

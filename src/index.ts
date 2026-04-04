@@ -6,6 +6,7 @@ import type {
 import { HiFiClient } from './client';
 import { METADATA_PROVIDER_ID, STREAMING_PROVIDER_ID } from './config';
 import { createMetadataProvider } from './metadata-provider';
+
 import { createStreamingProvider } from './streaming-provider';
 
 const plugin: NuclearPlugin = {
