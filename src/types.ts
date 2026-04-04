@@ -160,3 +160,42 @@ export type HiFiCoverResponse = {
     '80': string;
   }>;
 };
+
+export type TidalPlaylist = {
+  uuid: string;
+  title: string;
+  type: string;
+  url: string;
+  image: string;
+  squareImage: string;
+  description: string;
+  numberOfTracks: number;
+  duration: number;
+};
+
+export type HiFiPlaylistResponse = {
+  version: string;
+  playlist: TidalPlaylist & {
+    created: string;
+    lastUpdated: string;
+  };
+  items: Array<{
+    item: TidalTrack & { dateAdded: string };
+    type: string;
+    cut: null;
+  }>;
+};
+
+export type HotMonochromeSection = {
+  title: string;
+  type: 'TRACK_LIST' | 'ALBUM_LIST' | 'PLAYLIST_LIST';
+  items: TidalTrack[] | TidalAlbum[] | TidalPlaylist[];
+};
+
+export type HotMonochromeResponse = {
+  version: string;
+  top_albums: TidalAlbum[];
+  top_tracks: TidalTrack[];
+  featured_playlists: TidalPlaylist[];
+  sections: HotMonochromeSection[];
+};

@@ -3,6 +3,9 @@ import type {
   AlbumRef,
   ArtistRef,
   ArtworkSet,
+  Playlist,
+  PlaylistItem,
+  PlaylistRef,
   ProviderRef,
   StreamCandidate,
   Track,
@@ -12,11 +15,13 @@ import type {
 import { METADATA_PROVIDER_ID } from './config';
 import type {
   HiFiAlbumResponse,
+  HiFiPlaylistResponse,
   TidalAlbum,
   TidalArtist,
   TidalArtistSummary,
   TidalBtsManifest,
   TidalPlaybackInfo,
+  TidalPlaylist,
   TidalSimilarArtist,
   TidalTrack,
 } from './types';
@@ -159,9 +164,7 @@ export const mapTidalTrackToStreamCandidate = (
   id: String(track.id),
   title: `${track.artists.map((artist) => artist.name).join(', ')} - ${track.title}`,
   durationMs: track.duration * 1000,
-  thumbnail: track.album.cover
-    ? coverUrl(track.album.cover, 320)
-    : undefined,
+  thumbnail: track.album.cover ? coverUrl(track.album.cover, 320) : undefined,
   failed: false,
   source: makeSource(track.id),
 });
@@ -178,4 +181,44 @@ export const resolveManifest = (
   }
 
   return JSON.parse(atob(playbackInfo.manifest)) as TidalBtsManifest;
+};
+
+export const mapTidalPlaylistToPlaylistRef = (
+  playlist: TidalPlaylist,
+): PlaylistRef => ({
+  id: playlist.uuid,
+  name: playlist.title,
+  artwork: makeArtworkSet(playlist.squareImage),
+  source: {
+    provider: METADATA_PROVIDER_ID,
+    id: playlist.uuid,
+    url: playlist.url,
+  },
+});
+
+export const mapHiFiPlaylistToPlaylist = (
+  response: HiFiPlaylistResponse,
+): Playlist => {
+  const { playlist } = response;
+  const items: PlaylistItem[] = response.items.map(({ item }) => ({
+    id: String(item.id),
+    addedAtIso: new Date(item.dateAdded).toISOString(),
+    track: mapTidalTrackToTrack(item),
+  }));
+
+  return {
+    id: playlist.uuid,
+    name: playlist.title,
+    description: playlist.description || undefined,
+    artwork: makeArtworkSet(playlist.squareImage),
+    createdAtIso: playlist.created || new Date().toISOString(),
+    lastModifiedIso: playlist.lastUpdated || new Date().toISOString(),
+    origin: {
+      provider: METADATA_PROVIDER_ID,
+      id: playlist.uuid,
+      url: playlist.url,
+    },
+    isReadOnly: true,
+    items,
+  };
 };

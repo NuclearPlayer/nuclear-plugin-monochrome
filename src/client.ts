@@ -4,6 +4,8 @@ import {
   ARTIST_CACHE_TTL_MS,
   BACKOFF_BASE_MS,
   BACKOFF_MAX_MS,
+  DASHBOARD_CACHE_TTL_MS,
+  HOT_MONOCHROME_URL,
   REQUEST_TIMEOUT_MS,
   RETRYABLE_STATUS_CODES,
 } from './config';
@@ -12,11 +14,13 @@ import type {
   HiFiAlbumResponse,
   HiFiArtistDiscographyResponse,
   HiFiCoverResponse,
+  HiFiPlaylistResponse,
   HiFiSearchAlbumsResponse,
   HiFiSearchArtistsResponse,
   HiFiSearchTracksResponse,
   HiFiSimilarArtistsResponse,
   HiFiTrackPlaybackResponse,
+  HotMonochromeResponse,
 } from './types';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -32,6 +36,7 @@ type CacheEntry<T> = {
 export class HiFiClient {
   #fetch: FetchFunction;
   #artistCache = new Map<number, CacheEntry<HiFiArtistDiscographyResponse>>();
+  #dashboardCache: CacheEntry<HotMonochromeResponse> | null = null;
 
   constructor(fetchFn: FetchFunction) {
     this.#fetch = fetchFn;
@@ -159,5 +164,30 @@ export class HiFiClient {
 
   async getCover(trackId: number): Promise<HiFiCoverResponse> {
     return this.#request('/cover', { id: String(trackId) });
+  }
+
+  async getPlaylist(uuid: string): Promise<HiFiPlaylistResponse> {
+    return this.#request('/playlist', { id: uuid });
+  }
+
+  async getDashboard(): Promise<HotMonochromeResponse> {
+    if (
+      this.#dashboardCache &&
+      Date.now() - this.#dashboardCache.fetchedAt < DASHBOARD_CACHE_TTL_MS
+    ) {
+      return this.#dashboardCache.data;
+    }
+
+    const response = await this.#fetch(HOT_MONOCHROME_URL, {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      throw new Error(`hot.monochrome.tf returned ${response.status}`);
+    }
+
+    const data = (await response.json()) as HotMonochromeResponse;
+    this.#dashboardCache = { data, fetchedAt: Date.now() };
+    return data;
   }
 }
