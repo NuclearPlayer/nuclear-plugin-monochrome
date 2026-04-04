@@ -11,7 +11,7 @@
     "category": "streaming",
     "icon": {
       "type": "link",
-      "link": "https://monochrome.tf/assets/512.png"
+      "link": "https://raw.githubusercontent.com/NuclearPlayer/nuclear-plugin-monochrome/main/assets/icon.png"
     },
     "permissions": []
   },
@@ -39,6 +39,7 @@
   },
   "files": [
     "src",
+    "assets",
     "README.md"
   ],
   "dependencies": {
