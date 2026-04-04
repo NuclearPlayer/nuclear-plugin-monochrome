@@ -1,5 +1,6 @@
 import type { FetchFunction } from '@nuclearplayer/plugin-sdk';
 
+import { REQUEST_TIMEOUT_MS, RETRYABLE_STATUS_CODES } from './config';
 import { HIFI_INSTANCES } from './instances';
 import type {
   HiFiAlbumResponse,
@@ -13,9 +14,6 @@ import type {
   HiFiTrackInfoResponse,
   HiFiTrackPlaybackResponse,
 } from './types';
-
-const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
-const REQUEST_TIMEOUT_MS = 12_000;
 
 export class HiFiClient {
   #fetch: FetchFunction;

@@ -3,13 +3,16 @@ import type {
   NuclearPluginAPI,
 } from '@nuclearplayer/plugin-sdk';
 
-const METADATA_PROVIDER_ID = 'monochrome';
-const STREAMING_PROVIDER_ID = 'monochrome-stream';
+import { HiFiClient } from './client';
+import { METADATA_PROVIDER_ID, STREAMING_PROVIDER_ID } from './config';
+import { createMetadataProvider } from './metadata-provider';
+import { createStreamingProvider } from './streaming-provider';
 
 const plugin: NuclearPlugin = {
   onEnable(api: NuclearPluginAPI) {
-    // TODO: register metadata provider
-    // TODO: register streaming provider
+    const client = new HiFiClient(api.Http.fetch);
+    api.Providers.register(createMetadataProvider(client));
+    api.Providers.register(createStreamingProvider(client));
   },
 
   onDisable(api: NuclearPluginAPI) {
