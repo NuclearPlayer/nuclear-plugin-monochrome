@@ -1,6 +1,7 @@
 import type {
   Album,
   AlbumRef,
+  ArtistBio,
   ArtistRef,
   ArtworkSet,
   ProviderRef,
@@ -11,9 +12,11 @@ import type {
 import { METADATA_PROVIDER_ID } from './config';
 import type {
   HiFiAlbumResponse,
+  HiFiArtistInfoResponse,
   TidalAlbum,
   TidalArtist,
   TidalArtistSummary,
+  TidalSimilarArtist,
   TidalTrack,
 } from './types';
 
@@ -90,6 +93,22 @@ export const mapTidalAlbumToAlbum = (
     : undefined,
   artwork: makeArtworkSet(album.cover),
   source: makeSource(album.id),
+});
+
+export const mapArtistInfoToArtistBio = (
+  response: HiFiArtistInfoResponse,
+): ArtistBio => ({
+  name: response.artist.name,
+  artwork: makeArtworkSet(response.artist.picture),
+  source: makeSource(response.artist.id),
+});
+
+export const mapTidalSimilarArtistToArtistRef = (
+  artist: TidalSimilarArtist,
+): ArtistRef => ({
+  name: artist.name,
+  artwork: makeArtworkSet(artist.picture),
+  source: makeSource(Number(artist.id)),
 });
 
 export const mapTidalTrackToTrack = (track: TidalTrack): Track => ({

@@ -127,20 +127,36 @@ export class HiFiClient {
     });
   }
 
-  async getArtist(artistId: number): Promise<HiFiArtistInfoResponse> {}
+  async getArtist(artistId: number): Promise<HiFiArtistInfoResponse> {
+    return this.#request('/artist', { id: String(artistId) });
+  }
 
   async getArtistDiscography(
     artistId: number,
-  ): Promise<HiFiArtistDiscographyResponse> {}
+  ): Promise<HiFiArtistDiscographyResponse> {
+    return this.#request('/artist', {
+      f: String(artistId),
+      skip_tracks: 'true',
+    });
+  }
 
   async getArtistTopTracks(
     artistId: number,
-    limit?: number,
-  ): Promise<HiFiArtistDiscographyResponse> {}
+    limit = 15,
+  ): Promise<HiFiArtistDiscographyResponse> {
+    return this.#request('/artist', {
+      f: String(artistId),
+      limit: String(limit),
+    });
+  }
 
   async getSimilarArtists(
     artistId: number,
-  ): Promise<HiFiSimilarArtistsResponse> {}
+  ): Promise<HiFiSimilarArtistsResponse> {
+    return this.#request('/artist/similar', { id: String(artistId) });
+  }
 
-  async getCover(trackId: number): Promise<HiFiCoverResponse> {}
+  async getCover(trackId: number): Promise<HiFiCoverResponse> {
+    return this.#request('/cover', { id: String(trackId) });
+  }
 }
