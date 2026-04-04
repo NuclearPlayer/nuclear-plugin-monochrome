@@ -1,13 +1,16 @@
 import type {
+  Album,
   AlbumRef,
   ArtistRef,
   ArtworkSet,
   ProviderRef,
   Track,
+  TrackRef,
 } from '@nuclearplayer/plugin-sdk';
 
 import { METADATA_PROVIDER_ID } from './config';
 import type {
+  HiFiAlbumResponse,
   TidalAlbum,
   TidalArtist,
   TidalArtistSummary,
@@ -61,6 +64,30 @@ export const mapTidalArtistToArtistRef = (artist: TidalArtist): ArtistRef => ({
 export const mapTidalAlbumToAlbumRef = (album: TidalAlbum): AlbumRef => ({
   title: album.title,
   artists: album.artists.map(mapTidalArtistSummaryToArtistRef),
+  artwork: makeArtworkSet(album.cover),
+  source: makeSource(album.id),
+});
+
+export const mapTidalTrackToTrackRef = (track: TidalTrack): TrackRef => ({
+  title: track.title,
+  artists: track.artists.map(mapTidalArtistSummaryToArtistRef),
+  artwork: makeArtworkSet(track.album.cover),
+  source: makeSource(track.id),
+});
+
+export const mapTidalAlbumToAlbum = (
+  album: HiFiAlbumResponse['data'],
+): Album => ({
+  title: album.title,
+  artists: album.artists.map((artist) => ({
+    name: artist.name,
+    roles: [artist.type],
+    source: makeSource(artist.id),
+  })),
+  tracks: album.items.map(({ item }) => mapTidalTrackToTrackRef(item)),
+  releaseDate: album.releaseDate
+    ? { precision: 'day', dateIso: album.releaseDate }
+    : undefined,
   artwork: makeArtworkSet(album.cover),
   source: makeSource(album.id),
 });

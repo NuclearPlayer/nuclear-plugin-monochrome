@@ -3,6 +3,7 @@ import type { MetadataProvider } from '@nuclearplayer/plugin-sdk';
 import type { HiFiClient } from './client';
 import { METADATA_PROVIDER_ID, STREAMING_PROVIDER_ID } from './config';
 import {
+  mapTidalAlbumToAlbum,
   mapTidalAlbumToAlbumRef,
   mapTidalArtistToArtistRef,
   mapTidalTrackToTrack,
@@ -16,6 +17,7 @@ export const createMetadataProvider = (
   name: 'Monochrome',
   streamingProviderId: STREAMING_PROVIDER_ID,
   searchCapabilities: ['artists', 'albums', 'tracks'],
+  albumMetadataCapabilities: ['albumDetails'],
 
   searchArtists: async (params) => {
     const response = await client.searchArtists(params.query, params.limit);
@@ -30,5 +32,10 @@ export const createMetadataProvider = (
   searchTracks: async (params) => {
     const response = await client.searchTracks(params.query, params.limit);
     return response.data.items.map(mapTidalTrackToTrack);
+  },
+
+  fetchAlbumDetails: async (albumId) => {
+    const response = await client.getAlbum(Number(albumId));
+    return mapTidalAlbumToAlbum(response.data);
   },
 });

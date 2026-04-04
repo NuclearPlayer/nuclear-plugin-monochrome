@@ -79,21 +79,39 @@ export class HiFiClient {
 
   async searchTracks(
     query: string,
-    limit?: number,
-    offset?: number,
-  ): Promise<HiFiSearchTracksResponse> {}
+    limit = 25,
+    offset = 0,
+  ): Promise<HiFiSearchTracksResponse> {
+    return this.#request('/search', {
+      s: query,
+      limit: String(limit),
+      offset: String(offset),
+    });
+  }
 
   async searchArtists(
     query: string,
-    limit?: number,
-    offset?: number,
-  ): Promise<HiFiSearchArtistsResponse> {}
+    limit = 25,
+    offset = 0,
+  ): Promise<HiFiSearchArtistsResponse> {
+    return this.#request('/search', {
+      a: query,
+      limit: String(limit),
+      offset: String(offset),
+    });
+  }
 
   async searchAlbums(
     query: string,
-    limit?: number,
-    offset?: number,
-  ): Promise<HiFiSearchAlbumsResponse> {}
+    limit = 25,
+    offset = 0,
+  ): Promise<HiFiSearchAlbumsResponse> {
+    return this.#request('/search', {
+      al: query,
+      limit: String(limit),
+      offset: String(offset),
+    });
+  }
 
   async getTrackInfo(trackId: number): Promise<HiFiTrackInfoResponse> {}
 
@@ -102,7 +120,12 @@ export class HiFiClient {
     quality?: string,
   ): Promise<HiFiTrackPlaybackResponse> {}
 
-  async getAlbum(albumId: number, limit?: number): Promise<HiFiAlbumResponse> {}
+  async getAlbum(albumId: number, limit = 100): Promise<HiFiAlbumResponse> {
+    return this.#request('/album', {
+      id: String(albumId),
+      limit: String(limit),
+    });
+  }
 
   async getArtist(artistId: number): Promise<HiFiArtistInfoResponse> {}
 
