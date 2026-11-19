@@ -1,6 +1,6 @@
 {
   "name": "nuclear-plugin-monochrome",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Monochrome metadata and streaming provider for Nuclear music player",
   "author": "nukeop",
   "license": "AGPL-3.0-only",
