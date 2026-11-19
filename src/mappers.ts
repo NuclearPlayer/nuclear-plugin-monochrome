@@ -1,11 +1,9 @@
 import type {
   Album,
   AlbumRef,
+  ArtistCredit,
   ArtistRef,
   ArtworkSet,
-  Playlist,
-  PlaylistItem,
-  PlaylistRef,
   ProviderRef,
   StreamCandidate,
   Track,
@@ -14,211 +12,113 @@ import type {
 
 import { METADATA_PROVIDER_ID } from './config';
 import type {
-  HiFiAlbumResponse,
-  HiFiPlaylistResponse,
-  TidalAlbum,
-  TidalArtist,
-  TidalArtistSummary,
-  TidalBtsManifest,
-  TidalPlaybackInfo,
-  TidalPlaylist,
-  TidalSimilarArtist,
-  TidalTrack,
+  MonochromeArtistSummary,
+  MonochromeRelease,
+  MonochromeSearchArtist,
+  MonochromeSearchRelease,
+  MonochromeSearchTrack,
+  MonochromeTrack,
 } from './types';
 
-const TIDAL_IMAGE_BASE = 'https://resources.tidal.com/images';
-
-const coverUrl = (uuid: string, size: number) =>
-  `${TIDAL_IMAGE_BASE}/${uuid.replace(/-/g, '/')}/${size}x${size}.jpg`;
-
-const makeSource = (id: number): ProviderRef => ({
+const makeSource = (id: string): ProviderRef => ({
   provider: METADATA_PROVIDER_ID,
-  id: String(id),
+  id,
 });
 
-const makeArtworkSet = (uuid: string | null): ArtworkSet | undefined =>
-  uuid
-    ? {
-        items: [
-          {
-            url: coverUrl(uuid, 750),
-            width: 750,
-            height: 750,
-            purpose: 'cover',
-          },
-          {
-            url: coverUrl(uuid, 320),
-            width: 320,
-            height: 320,
-            purpose: 'thumbnail',
-          },
-        ],
-      }
-    : undefined;
-
-export const mapTidalArtistSummaryToArtistRef = (
-  artist: TidalArtistSummary,
-): ArtistRef => ({
-  name: artist.name,
-  artwork: makeArtworkSet(artist.picture),
-  source: makeSource(artist.id),
-});
-
-export const mapTidalArtistToArtistRef = (artist: TidalArtist): ArtistRef => ({
-  name: artist.name,
-  artwork: makeArtworkSet(artist.picture),
-  source: makeSource(artist.id),
-});
-
-export const deduplicateAlbums = (albums: TidalAlbum[]): TidalAlbum[] => {
-  const unique = new Map<string, TidalAlbum>();
-
-  albums.forEach((album) => {
-    const key = JSON.stringify([album.title, album.numberOfTracks]);
-    const existing = unique.get(key);
-
-    if (!existing) {
-      unique.set(key, album);
-      return;
-    }
-
-    if (album.explicit && !existing.explicit) {
-      unique.set(key, album);
-      return;
-    }
-
-    if (!album.explicit && existing.explicit) {
-      return;
-    }
-
-    const existingTags = existing.mediaMetadata?.tags?.length ?? 0;
-    const newTags = album.mediaMetadata?.tags?.length ?? 0;
-    if (newTags > existingTags) {
-      unique.set(key, album);
-    }
-  });
-
-  return Array.from(unique.values());
-};
-
-export const mapTidalAlbumToAlbumRef = (album: TidalAlbum): AlbumRef => ({
-  title: album.title,
-  artists: album.artists.map(mapTidalArtistSummaryToArtistRef),
-  artwork: makeArtworkSet(album.cover),
-  source: makeSource(album.id),
-});
-
-export const mapTidalTrackToTrackRef = (track: TidalTrack): TrackRef => ({
-  title: track.title,
-  artists: track.artists.map(mapTidalArtistSummaryToArtistRef),
-  artwork: makeArtworkSet(track.album.cover),
-  source: makeSource(track.id),
-});
-
-export const mapTidalAlbumToAlbum = (
-  album: HiFiAlbumResponse['data'],
-): Album => ({
-  title: album.title,
-  artists: album.artists.map((artist) => ({
-    name: artist.name,
-    roles: [artist.type],
-    source: makeSource(artist.id),
-  })),
-  tracks: album.items.map(({ item }) => mapTidalTrackToTrackRef(item)),
-  releaseDate: album.releaseDate
-    ? { precision: 'day', dateIso: album.releaseDate }
-    : undefined,
-  artwork: makeArtworkSet(album.cover),
-  source: makeSource(album.id),
-});
-
-export const mapTidalSimilarArtistToArtistRef = (
-  artist: TidalSimilarArtist,
-): ArtistRef => ({
-  name: artist.name,
-  artwork: makeArtworkSet(artist.picture),
-  source: makeSource(Number(artist.id)),
-});
-
-export const mapTidalTrackToTrack = (track: TidalTrack): Track => ({
-  title: track.title,
-  artists: track.artists.map((artist) => ({
-    name: artist.name,
-    roles: [artist.type],
-    source: makeSource(artist.id),
-  })),
-  album: {
-    title: track.album.title,
-    artwork: makeArtworkSet(track.album.cover),
-    source: makeSource(track.album.id),
-  },
-  durationMs: track.duration * 1000,
-  trackNumber: track.trackNumber,
-  artwork: makeArtworkSet(track.album.cover),
-  source: makeSource(track.id),
-});
-
-export const mapTidalTrackToStreamCandidate = (
-  track: TidalTrack,
-): StreamCandidate => ({
-  id: String(track.id),
-  title: `${track.artists.map((artist) => artist.name).join(', ')} - ${track.title}`,
-  durationMs: track.duration * 1000,
-  thumbnail: track.album.cover ? coverUrl(track.album.cover, 320) : undefined,
-  failed: false,
-  source: makeSource(track.id),
-});
-
-const BTS_MIME_TYPE = 'application/vnd.tidal.bts';
-
-export const resolveManifest = (
-  playbackInfo: TidalPlaybackInfo,
-): TidalBtsManifest => {
-  if (playbackInfo.manifestMimeType !== BTS_MIME_TYPE) {
-    throw new Error(
-      `Unsupported manifest type: ${playbackInfo.manifestMimeType}`,
-    );
+const makeArtworkSet = (url: string | null): ArtworkSet | undefined => {
+  if (!url) {
+    return undefined;
   }
-
-  return JSON.parse(atob(playbackInfo.manifest)) as TidalBtsManifest;
+  return { items: [{ url }] };
 };
 
-export const mapTidalPlaylistToPlaylistRef = (
-  playlist: TidalPlaylist,
-): PlaylistRef => ({
-  id: playlist.uuid,
-  name: playlist.title,
-  artwork: makeArtworkSet(playlist.squareImage),
-  source: {
-    provider: METADATA_PROVIDER_ID,
-    id: playlist.uuid,
-    url: playlist.url,
-  },
-});
-
-export const mapHiFiPlaylistToPlaylist = (
-  response: HiFiPlaylistResponse,
-): Playlist => {
-  const { playlist } = response;
-  const items: PlaylistItem[] = response.items.map(({ item }) => ({
-    id: String(item.id),
-    addedAtIso: new Date(item.dateAdded).toISOString(),
-    track: mapTidalTrackToTrack(item),
+const mapArtistCredits = (
+  artistIds: string[],
+  artistNames: string[],
+): ArtistCredit[] =>
+  artistIds.map((artistId, index) => ({
+    name: artistNames[index],
+    roles: ['main'],
+    source: makeSource(artistId),
   }));
 
-  return {
-    id: playlist.uuid,
-    name: playlist.title,
-    description: playlist.description || undefined,
-    artwork: makeArtworkSet(playlist.squareImage),
-    createdAtIso: playlist.created || new Date().toISOString(),
-    lastModifiedIso: playlist.lastUpdated || new Date().toISOString(),
-    origin: {
-      provider: METADATA_PROVIDER_ID,
-      id: playlist.uuid,
-      url: playlist.url,
-    },
-    isReadOnly: true,
-    items,
-  };
+const mapArtistSummaryToArtistRef = (
+  artist: MonochromeArtistSummary,
+): ArtistRef => ({
+  name: artist.name,
+  artwork: makeArtworkSet(artist.avatar),
+  source: makeSource(artist.artistId),
+});
+
+export const mapSearchArtistToArtistRef = (
+  artist: MonochromeSearchArtist,
+): ArtistRef => ({
+  name: artist.name,
+  artwork: makeArtworkSet(artist.avatar),
+  source: makeSource(artist.artistId),
+});
+
+export const mapSearchReleaseToAlbumRef = (
+  release: MonochromeSearchRelease,
+): AlbumRef => ({
+  title: release.title,
+  artists: release.artistIds.map((artistId, index) => ({
+    name: release.artistNames[index],
+    source: makeSource(artistId),
+  })),
+  artwork: makeArtworkSet(release.artwork),
+  source: makeSource(release.releaseId),
+});
+
+export const mapReleaseToAlbumRef = (release: MonochromeRelease): AlbumRef => ({
+  title: release.title,
+  artists: release.artists.map(mapArtistSummaryToArtistRef),
+  artwork: makeArtworkSet(release.artwork),
+  source: makeSource(release.releaseId),
+});
+
+export const mapTrackToTrackRef = (track: MonochromeTrack): TrackRef => ({
+  title: track.title,
+  artists: track.artists.map(mapArtistSummaryToArtistRef),
+  artwork: makeArtworkSet(track.artwork),
+  source: makeSource(track.trackId),
+});
+
+const mapReleaseDate = (releaseDate: string | null): Album['releaseDate'] => {
+  if (!releaseDate) {
+    return undefined;
+  }
+  return { precision: 'day', dateIso: releaseDate };
 };
+
+export const mapReleaseToAlbum = (release: MonochromeRelease): Album => ({
+  title: release.title,
+  artists: release.artists.map((artist) => ({
+    name: artist.name,
+    roles: ['main'],
+    source: makeSource(artist.artistId),
+  })),
+  tracks: release.tracks.map(mapTrackToTrackRef),
+  releaseDate: mapReleaseDate(release.releaseDate),
+  artwork: makeArtworkSet(release.artwork),
+  source: makeSource(release.releaseId),
+});
+
+export const mapSearchTrackToTrack = (track: MonochromeSearchTrack): Track => ({
+  title: track.title,
+  artists: mapArtistCredits(track.artistIds, track.artistNames),
+  durationMs: track.duration,
+  artwork: makeArtworkSet(track.artwork),
+  source: makeSource(track.trackId),
+});
+
+export const mapSearchTrackToStreamCandidate = (
+  track: MonochromeSearchTrack,
+): StreamCandidate => ({
+  id: track.trackId,
+  title: `${track.artistNames.join(', ')} - ${track.title}`,
+  durationMs: track.duration,
+  thumbnail: track.artwork ?? undefined,
+  failed: false,
+  source: makeSource(track.trackId),
+});

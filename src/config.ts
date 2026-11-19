@@ -1,13 +1,4 @@
 export const METADATA_PROVIDER_ID = 'monochrome';
 export const STREAMING_PROVIDER_ID = 'monochrome-stream';
-export const REQUEST_TIMEOUT_MS = 12_000;
-export const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
-export const BACKOFF_BASE_MS = 500;
-export const BACKOFF_MAX_MS = 5_000;
-export const ARTIST_TOP_TRACKS_LIMIT = 15;
+export const MONOCHROME_API_URL = 'https://tracks.monochrome.st';
 export const ARTIST_CACHE_TTL_MS = 60_000;
-export const DASHBOARD_PROVIDER_ID = 'monochrome-dashboard';
-export const DASHBOARD_CACHE_TTL_MS = 300_000;
-export const HOT_MONOCHROME_URL = 'https://hot.monochrome.tf/';
-export const PLAYLIST_PROVIDER_ID = 'monochrome-playlists';
-export const PLAYLIST_PROVIDER_NAME = 'Monochrome';

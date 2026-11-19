@@ -1,201 +1,63 @@
-export type TidalArtistSummary = {
-  id: number;
+export type MonochromeArtistSummary = {
+  artistId: string;
   name: string;
-  type: string;
-  picture: string | null;
+  avatar: string | null;
 };
 
-export type TidalAlbumSummary = {
-  id: number;
+export type MonochromeSearchTrack = {
+  trackId: string;
   title: string;
-  cover: string;
-  releaseDate?: string;
-};
-
-export type TidalTrack = {
-  id: number;
-  title: string;
-  duration: number;
-  trackNumber: number;
-  volumeNumber: number;
-  isrc: string;
-  explicit: boolean;
-  audioQuality: string;
-  audioModes: string[];
-  artist: TidalArtistSummary;
-  artists: TidalArtistSummary[];
-  album: TidalAlbumSummary;
-  version: string | null;
-  copyright?: string;
-  popularity?: number;
-};
-
-export type TidalArtist = {
-  id: number;
-  name: string;
-  picture: string | null;
-  popularity: number;
-  url?: string;
-};
-
-export type TidalAlbum = {
-  id: number;
-  title: string;
-  duration: number;
-  numberOfTracks: number;
-  numberOfVolumes: number;
-  releaseDate: string;
-  cover: string;
-  explicit: boolean;
-  audioQuality: string;
-  audioModes: string[];
-  mediaMetadata?: { tags: string[] };
-  type?: string;
-  version: string | null;
-  artist: TidalArtistSummary;
-  artists: TidalArtistSummary[];
-};
-
-export type TidalSimilarArtist = {
-  id: number | string;
-  name: string;
-  picture: string | null;
-  popularity?: number;
-  url?: string;
-};
-
-export type TidalPlaybackInfo = {
-  trackId: number;
-  audioQuality: string;
-  audioMode: string;
-  manifestMimeType: string;
-  manifest: string;
-  bitDepth: number;
-  sampleRate: number;
-  albumReplayGain: number;
-  albumPeakAmplitude: number;
-  trackReplayGain: number;
-  trackPeakAmplitude: number;
-};
-
-export type TidalBtsManifest = {
-  mimeType: string;
-  codecs: string;
-  urls: string[];
-};
-
-export type TidalPaginatedList<T> = {
-  limit: number;
-  offset: number;
-  totalNumberOfItems: number;
-  items: T[];
-};
-
-export type HiFiSearchTracksResponse = {
-  version: string;
-  data: TidalPaginatedList<TidalTrack>;
-};
-
-export type HiFiSearchArtistsResponse = {
-  version: string;
-  data: {
-    artists: TidalPaginatedList<TidalArtist>;
-  };
-};
-
-export type HiFiSearchAlbumsResponse = {
-  version: string;
-  data: {
-    albums: TidalPaginatedList<TidalAlbum>;
-  };
-};
-
-export type HiFiTrackInfoResponse = {
-  version: string;
-  data: TidalTrack;
-};
-
-export type HiFiTrackPlaybackResponse = {
-  version: string;
-  data: TidalPlaybackInfo;
-};
-
-export type HiFiAlbumResponse = {
-  version: string;
-  data: TidalAlbum & {
-    items: Array<{ item: TidalTrack; type: 'track' }>;
-  };
-};
-
-export type HiFiArtistInfoResponse = {
-  version: string;
-  artist: TidalArtist;
-  cover: {
-    id: number;
-    name: string;
-    '750': string;
-  } | null;
-};
-
-export type HiFiArtistDiscographyResponse = {
-  version: string;
-  albums: {
-    items: TidalAlbum[];
-  };
-  tracks: TidalTrack[];
-};
-
-export type HiFiSimilarArtistsResponse = {
-  version: string;
-  artists: TidalSimilarArtist[];
-};
-
-export type HiFiCoverResponse = {
-  version: string;
-  covers: Array<{
-    id?: number;
-    name?: string;
-    '1280': string;
-    '640': string;
-    '80': string;
-  }>;
-};
-
-export type TidalPlaylist = {
-  uuid: string;
-  title: string;
-  type: string;
-  url: string;
-  image: string;
-  squareImage: string;
-  description: string;
-  numberOfTracks: number;
+  artistIds: string[];
+  artistNames: string[];
+  artwork: string | null;
   duration: number;
 };
 
-export type HiFiPlaylistResponse = {
-  version: string;
-  playlist: TidalPlaylist & {
-    created: string;
-    lastUpdated: string;
-  };
-  items: Array<{
-    item: TidalTrack & { dateAdded: string };
-    type: string;
-    cut: null;
-  }>;
-};
-
-export type HotMonochromeSection = {
+export type MonochromeTrack = {
+  trackId: string;
   title: string;
-  type: 'TRACK_LIST' | 'ALBUM_LIST' | 'PLAYLIST_LIST';
-  items: TidalTrack[] | TidalAlbum[] | TidalPlaylist[];
+  artists: MonochromeArtistSummary[];
+  artwork: string | null;
 };
 
-export type HotMonochromeResponse = {
-  version: string;
-  top_albums: TidalAlbum[];
-  top_tracks: TidalTrack[];
-  featured_playlists: TidalPlaylist[];
-  sections: HotMonochromeSection[];
+export type MonochromeSearchRelease = {
+  releaseId: string;
+  title: string;
+  artistIds: string[];
+  artistNames: string[];
+  artwork: string | null;
+};
+
+export type MonochromeRelease = {
+  releaseId: string;
+  title: string;
+  artists: MonochromeArtistSummary[];
+  releaseDate: string | null;
+  artwork: string | null;
+  tracks: MonochromeTrack[];
+};
+
+export type MonochromeSearchArtist = {
+  artistId: string;
+  name: string;
+  avatar: string | null;
+};
+
+export type MonochromeArtist = {
+  artistId: string;
+  name: string;
+  topTracks: MonochromeTrack[];
+  releases: MonochromeRelease[];
+};
+
+export type MonochromeTrackSearchResponse = {
+  tracks: MonochromeSearchTrack[];
+};
+
+export type MonochromeReleaseSearchResponse = {
+  releases: MonochromeSearchRelease[];
+};
+
+export type MonochromeArtistSearchResponse = {
+  artists: MonochromeSearchArtist[];
 };
